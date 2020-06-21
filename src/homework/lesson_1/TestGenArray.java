@@ -2,6 +2,7 @@ package homework.lesson_1;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TestGenArray {
     public static void main(String[] args) {
@@ -20,10 +21,10 @@ public class TestGenArray {
         System.out.println("'intArr' after swapping some elements: " + Arrays.toString(intArr));
         System.out.println("'strArr' after swapping some elements: " + Arrays.toString(strArr));
 
-        ArrayList<Integer> intArrayList =  intGenArr.toArrayList(intArr);
+        List<Integer> intArrayList =  intGenArr.toArrayList(intArr);
         System.out.println("ArayList from 'intArr' array: " + intArrayList.toString());
 
-        ArrayList<String> arrayList =  stringGenArr.toArrayList(strArr);
+        List<String> arrayList =  stringGenArr.toArrayList(strArr);
         System.out.println("ArayList from 'strArr' array: " + arrayList.toString());
     }
 }

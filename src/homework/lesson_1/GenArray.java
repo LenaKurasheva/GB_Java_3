@@ -5,6 +5,7 @@ package homework.lesson_1;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class GenArray<T> {
     private T[] arr;
@@ -22,8 +23,8 @@ public class GenArray<T> {
         arr[indexA] = arr[indexB];
         arr[indexB] = temp;
     }
-    public ArrayList<T> toArrayList(T[] array){
-        ArrayList<T> arrayList = new ArrayList<>();
+    public List<T> toArrayList(T[] array){
+        List<T> arrayList = new ArrayList<>();
         for (int i = 0; i <array.length ; i++) {
             arrayList.add(array[i]);
         }
