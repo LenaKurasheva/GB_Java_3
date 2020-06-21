@@ -39,7 +39,7 @@ public class Box<T extends Fruit> {
 
     public boolean compare(Box<? extends Fruit> anotherBox){
         //Чтобы не столкнуться с ошибкой округления при сравнении двух дробный чисел, мы сравниваем в пределах дельты 0.0001
-        return this.getWeight() - anotherBox.getWeight() < 0.0001;
+        return Math.abs(this.getWeight() - anotherBox.getWeight()) < 0.0001;
     }
 
     public void addFruit(int quantity){
