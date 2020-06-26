@@ -1,8 +1,5 @@
 package homework.lesson_2;
 
-import homework.lesson_2.multiscene.ChatSceneApp;
-import homework.lesson_2.multiscene.SceneFlow;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -58,6 +55,7 @@ public class ClientHandler {
         System.out.println("Socket with [" + name + "] is closed: " + socket.isClosed());
     }
 
+// Читаем сообщения от пользователя:
     private void readMessages() throws IOException, SQLException {
         while (true) {
             if (in.available()>0) {
@@ -89,11 +87,19 @@ public class ClientHandler {
                     String recipientName = parts[1];
                     String [] mess = new String[parts.length-2];
                     System.arraycopy(parts, 2, mess , 0, parts.length - 2);
-                    message = String.join(" ", mess);
+                    // Проверка на запрещенные слова и цензура:
+                    String[] censoredMessage = Censorship.censor(mess);
+                    message = Censorship.joinString(censoredMessage);
                     myServer.sendDirect(this, recipientName, message);
                 }
 
-                 else myServer.broadcast(name + ": " + message);
+                 else {
+                     String [] mess = message.split("\\s");
+                     // Проверка на запрещенные слова и цензура:
+                    String[] censoredMessage = Censorship.censor(mess);
+                    message = Censorship.joinString(censoredMessage);
+                     myServer.broadcast(name + ": " + message);
+                 }
 
             }
         }
