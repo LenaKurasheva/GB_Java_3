@@ -17,9 +17,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 //контроллер сцены CHAT
 public class ChatController implements Stageable {
@@ -33,6 +39,7 @@ public class ChatController implements Stageable {
     private String chatText = "<body>";
     private static String nick;
     private static String login;
+    private final String filePath = "history.txt";
 
     public static void setLogin(String log){ login = log; }
 
@@ -83,24 +90,41 @@ public class ChatController implements Stageable {
                                     }
                                 });
                             } else {
+                                // В этом блоке все остальные сообщения, кт. будут записываться в историю и отображаться в окне чата
+                                String historyMess;
+                                Path path = Paths.get(filePath);
+                                // Создаем файл для записи истории сообщений, если он еще не был создан:
+                                if( !Files.exists(path)) Files.createFile(path);
 
                                 if (strFromServer.startsWith("from")) {
                                     chatText += "<p style='background-color:powderblue; white-space: normal; ' >" + ChatController.getSendingTime() +
                                             strFromServer + "</p>";
+                                    historyMess = ChatController.getSendingTime() + strFromServer;
                                 }
                                 else if (strFromServer.startsWith("to")) {
                                     chatText += "<p align='right' style='background-color:powderblue; white-space: normal;'>" + ChatController.getSendingTime() +
                                             strFromServer + "</p>";
+                                    historyMess = ChatController.getSendingTime() + strFromServer;
                                 }
                                 else if (strFromServer.startsWith(nick)) {
                                     chatText += "<p align='right' style='white-space: normal;'>" + ChatController.getSendingTime() + strFromServer + "</p>";
+                                    historyMess = ChatController.getSendingTime() + strFromServer;
                                 }
                                 else {
                                     chatText += "<p style='white-space: normal;'>" + ChatController.getSendingTime() + strFromServer + "</p>";
+                                    historyMess = ChatController.getSendingTime() + strFromServer;
                                 }
                                 Platform.runLater(() -> {
                                     messageArea.getEngine().loadContent(chatText);
                                 });
+
+                                String text = historyMess + "\n";
+                                //запись сообщений в файл history.txt:
+                                try {
+                                    Files.write(Paths.get(filePath), text.getBytes(), StandardOpenOption.APPEND);
+                                } catch (IOException e) {
+                                    System.out.println(e);
+                                }
 
                               //Предыдущий вариант с полем чата TextArea (до добавления стилей):
 //                            else Platform.runLater(()->{ messageArea.appendText(new SimpleDateFormat("hh:mm:ss a ").format(new Date()) + strFromServer + System.lineSeparator());});
@@ -137,7 +161,59 @@ public class ChatController implements Stageable {
             }
 
         }
+        // Отобразить на экране последние 100 сообщений:
+        showHistory();
 
+    }
+
+    //выгрузка из history.txt последих 100 строк в чат:
+    private void showHistory() throws IOException {
+        int indxOfMessageStart = 11;
+        String[] timeAndMess;
+
+        List<String> lines = Files.readAllLines(Paths.get(filePath), UTF_8);
+
+        if (lines.size() >= 100) {
+            for (int i = lines.size() - 100; i < lines.size(); i++) {
+                char[] charMessFromHistory = lines.get(i).toCharArray();
+                int indexOfMessageEnd = lines.get(i).length();
+                timeAndMess = separateTimefromMess(charMessFromHistory,indxOfMessageStart,indexOfMessageEnd);
+                showHistoryinChat(timeAndMess);
+            }
+        } else {
+            for (String line : lines) {
+                char[] charMessFromHistory = line.toCharArray();
+                int indexOfMessageEnd = line.length();
+                timeAndMess = separateTimefromMess(charMessFromHistory, indxOfMessageStart, indexOfMessageEnd);
+                showHistoryinChat(timeAndMess);
+            }
+        }
+    }
+    //отображает сообщения из истории, стилизуя в зависимости от типа:
+    private void showHistoryinChat(String[] timeAndMess){
+        if (timeAndMess[1].startsWith("from")) {
+            chatText += "<p style='background-color:powderblue; white-space: normal; ' >" + timeAndMess[0] +
+                    timeAndMess[1] + "</p>";
+        }
+        else if (timeAndMess[1].startsWith("to")) {
+            chatText += "<p align='right' style='background-color:powderblue; white-space: normal;'>" + timeAndMess[0] +
+                    timeAndMess[1] + "</p>";
+        }
+        else if (timeAndMess[1].startsWith(nick)) {
+            chatText += "<p align='right' style='white-space: normal;'>" + timeAndMess[0] + timeAndMess[1] + "</p>";
+        }
+        else {
+            chatText += "<p style='white-space: normal;'>" + timeAndMess[0] + timeAndMess[1] + "</p>";
+        }
+            messageArea.getEngine().loadContent(chatText);
+    }
+    // Преобразует массив символов, содержащий сообщение в массив из 2х строк {время сообщения, сообщение}:
+    private String[] separateTimefromMess(char[] charMessFromHistory, int indexOFMessStart, int indexOfMessEnd){
+        char[] charMessage = Arrays.copyOfRange(charMessFromHistory, indexOFMessStart, indexOfMessEnd);
+        char[] charTime = Arrays.copyOfRange(charMessFromHistory, 0, indexOFMessStart);
+        String historyMessTime = String.valueOf(charTime);
+        String histMess = String.valueOf(charMessage);
+        return new String[]{historyMessTime, histMess};
     }
 
     private static String getSendingTime(){

@@ -27,8 +27,11 @@ public class AuthService {
 
     public AuthService()throws SQLException, ClassNotFoundException {
         getConn();
-        createTable();
+        createUsersTable();
+        createCensorshipTable();
 //        writeDB();
+//        writeCensorshipDB();
+        getDataFromCensorshipTable();
     }
 
     // --------ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ--------
@@ -43,8 +46,8 @@ public class AuthService {
         System.out.println("База Подключена!");
     }
 
-    // --------Создание таблицы--------
-    public void createTable () throws ClassNotFoundException, SQLException
+    // --------Создание таблицы 'users'--------
+    public void createUsersTable () throws ClassNotFoundException, SQLException
     {
         statmt = conn.createStatement();
         statmt.execute("CREATE TABLE if not exists users \n" +
@@ -53,20 +56,54 @@ public class AuthService {
                 " pass VARCHAR(50), \n" +
                 " nick VARCHAR(50));");
 
-        System.out.println("Таблица создана или уже существует.");
+        System.out.println("Таблица users создана или уже существует.");
     }
 
-    // Заполнение таблицы (Первоначальное заполнение таблицы - используется 1 раз - для чата без возможности регистрации)
+    // --------Создание таблицы 'censorship'--------
+    public void createCensorshipTable () throws ClassNotFoundException, SQLException
+    {
+        statmt = conn.createStatement();
+        statmt.execute("CREATE TABLE if not exists censorship \n" +
+                "(id INTEGER PRIMARY KEY AUTO_INCREMENT,\n" +
+                " badWord VARCHAR(50) unique,\n" +
+                " changeTo VARCHAR(50));");
+
+        System.out.println("Таблица censorship создана или уже существует.");
+    }
+
+    // Заполнение таблицы users (Первоначальное заполнение таблицы - используется 1 раз - для чата без возможности регистрации)
     public void writeDB () throws SQLException {
         statmt.execute("INSERT INTO users (login, pass, nick) VALUES ('login1', 'pass1', 'nick1'); ");
         statmt.execute("INSERT INTO users (login, pass, nick) VALUES ('login2', 'pass2', 'nick2'); ");
         statmt.execute("INSERT INTO users (login, pass, nick) VALUES ('login3', 'pass3', 'nick3'); ");
 
-        System.out.println("Таблица заполнена");
+        System.out.println("Таблица users заполнена");
+    }
+
+    // Заполнение таблицы censorship (Первоначальное заполнение таблицы - используется 1 раз - для чата без возможности регистрации)
+    public void writeCensorshipDB () throws SQLException {
+        statmt.execute("INSERT INTO censorship (badWord, changeTo) VALUES ('дурак', 'censored:неумный'); ");
+        statmt.execute("INSERT INTO censorship (badWord, changeTo) VALUES ('дурачок', 'censored:неумный'); ");
+        statmt.execute("INSERT INTO censorship (badWord, changeTo) VALUES ('дурень', 'censored:(прост.) неумный'); ");
+
+        System.out.println("Таблица censorship заполнена");
     }
 
     public void start() {
         System.out.println("Authentication service started");
+    }
+
+    public void getDataFromCensorshipTable(){
+        try {
+            resSet = statmt.executeQuery("SELECT * FROM censorship;");
+            while (resSet.next()) {
+                String badWord = resSet.getString("badWord");
+                String changeTo = resSet.getString("changeTo");
+                Censorship.censorshipMap.put(badWord,changeTo);
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
     public String getNickByLoginAndPwd(String login, String passwd) {
