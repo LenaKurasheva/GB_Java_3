@@ -6,17 +6,21 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MyServer {
     private final int PORT = 8189;
     private List<ClientHandler> clients;
     private AuthService authService;
+    // Создаем пул потоков = 2
+    static ExecutorService executeIt = Executors.newFixedThreadPool(2);
 
     public AuthService getAuthService() {
         return authService;
     }
 
-    //создаем сокет сервера, authService (подключается к БД), сервер ждет подключений, при подключении
+    // Создаем сокет сервера, authService (подключается к БД), сервер ждет подключений, при подключении
     // создается обработчик клиентских сообщений ClientHandler:
     public MyServer() {
         try (ServerSocket server = new ServerSocket(PORT)) {
@@ -27,7 +31,9 @@ public class MyServer {
                 System.out.println("Server awaits clients");
                 Socket socket = server.accept();
                 System.out.println("Client connected");
-                new ClientHandler(this, socket);
+                // Сервер сможет одновременн обрабатывать тоько 2-х клиентов, т.к. пул = 2:
+                executeIt.execute(new ClientHandler(this, socket));
+//                new ClientHandler(this, socket);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -44,6 +50,8 @@ public class MyServer {
                     e.printStackTrace();
                 }
             }
+            // Закрываем ExecutorService:
+            executeIt.shutdown();
         }
     }
 

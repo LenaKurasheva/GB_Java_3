@@ -7,14 +7,17 @@ import java.net.Socket;
 import java.util.Scanner;
 
 //консольный клиент
-public class Client {
+public class Client implements Runnable {
     public static void setAuthorized(boolean authorized) {
         Client.authorized = authorized;
     }
 
     static boolean authorized;
 
-    public static void main(String[] args) throws IOException {
+
+    @Override
+    public void run() {
+//    public static void main(String[] args) throws IOException {
         Socket socket = null;
         try {
             socket = new Socket("localhost", 8189);
@@ -58,7 +61,11 @@ public class Client {
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         } finally {
-            socket.close();
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
