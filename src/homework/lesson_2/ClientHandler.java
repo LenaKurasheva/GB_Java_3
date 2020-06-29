@@ -7,7 +7,7 @@ import java.net.Socket;
 import java.sql.SQLException;
 
 //обработчик сообщений клиента
-public class ClientHandler {
+public class ClientHandler implements Runnable{
     private MyServer myServer;
     private Socket socket;
     private DataInputStream in;
@@ -23,10 +23,15 @@ public class ClientHandler {
         this.myServer = myServer;
         this.socket = socket;
         name = "";
+    }
+
+    @Override
+    public void run(){
+        System.out.println("NEW CLIENT on " + Thread.currentThread());
         try {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
-            new Thread(()-> {
+//            new Thread(()-> {
                 try {
                     authenticate();
                     readMessages();
@@ -35,7 +40,7 @@ public class ClientHandler {
                 } finally {
                     closeConnection();
                 }
-            }).start();
+//            }).start();
         } catch (IOException ex) {
             throw new RuntimeException("Client creation error");
         }
@@ -60,7 +65,7 @@ public class ClientHandler {
         while (true) {
             if (in.available()>0) {
                 String message = in.readUTF();
-                System.out.println("From " + name + ":" + message);
+                System.out.println("From " + name + ":" + message + "  " + Thread.currentThread());
                 if (message.equals("/end")) {
 
                     out.writeUTF("/end");
